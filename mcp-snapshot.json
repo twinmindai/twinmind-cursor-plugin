@@ -36,7 +36,7 @@
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Fetch complete content for one or more search results. Pass id for one result or ids for a batch of up to 10. For summary-{meeting_id}, returns the full untruncated transcript. For todo-{todo_id}, returns the task text and metadata. Prefer prefixed IDs returned by search; raw IDs remain supported and are auto-detected.",
+      "description": "Retrieve a memory or task by known ID; searching first is optional. Provide exactly one of id or ids (up to 10 unique IDs). For summary-{meeting_id}, the text field contains the full currently available transcript in recording-time order and notes contains the latest user notes. This works while capture is in progress or its summary is pending, once content is available. Returns the full preferred transcript, using diarized text with speaker labels when available, even if live chunks are newer or longer; otherwise returns live transcript chunks. Timestamp prefixes are absolute times in ISO 8601 using the recorded transcript timezone when available, otherwise the local offset derived from summary local/UTC times (start time only, to whole seconds). If localization cannot be resolved, timestamps retain their original offset. Text without a known recording time stays untimed. Full means all available text from the preferred transcript source, including partial progress during capture; a live transcript trails the audio by about a minute, so re-fetch the same ID for newer text and notes. For todo-{todo_id}, returns task text and metadata. To retrieve a linked memory's content, fetch summary-{meeting_id} separately. Prefer prefixed IDs; raw IDs are also supported. A single id returns one item; ids returns a results array.",
       "name": "fetch",
       "parameters": [
         "id",
@@ -52,7 +52,7 @@
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Search the authenticated user's meeting notes and tasks. Returns lightweight previews with an ID, title, concise summary, and user-openable URL when available. It never returns full transcripts. Call fetch with a returned ID to retrieve complete content. Meeting IDs use summary-{meeting_id}; task IDs use todo-{todo_id}.",
+      "description": "Quickly search across the authenticated user's memories and tasks using one query. The query supplies keyword retrieval for both and semantic reranking for memory results; tasks use keyword relevance. Returns a results array containing the same memory summary objects as summary_search, including notes, actions, recording times, location, metadata, and fetch IDs. Task entries contain id, title, summary, and url. Memory IDs use summary-{meeting_id}; task IDs use todo-{todo_id}. Call fetch for a memory's full transcript and latest notes, or for task details. For separate keywords and a ranking question, or explicit date filters, use summary_search. Memory results may fall back to recent memories if keywords find nothing; check relevance. For the latest memories or a capture in progress, use summary_search without keywords or query instead; a capture without a summary yet may be absent, so fetch a known meeting_id directly.",
       "name": "search",
       "parameters": [
         "query"
@@ -69,7 +69,7 @@
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Search the authenticated user's meeting summaries and notes. Use this for filtered overviews, themes, action items, or recent meetings—not for full transcripts. Supply a natural-language query for semantic ranking and optional keywords or local-time bounds for filtering. Results include meeting IDs, titles, summaries, actions, times, and locations. To read a complete transcript, call fetch with summary-{meeting_id}.",
+      "description": "Find the authenticated user's memories (recordings) by recency, recording date, or topic. For the latest memories, including a capture still in progress, omit both keywords and query: results are then newest first. Query reranks results by topic, which reorders a recent list and can push the newest memory out of it. An in-progress capture's summary reads \"Still in progress\"; fetch it for its partial transcript. A capture without a summary yet may be absent; fetch it directly if its meeting_id is known. For topics, pass keywords for retrieval and query to rerank by relevance. Use start_time/end_time for explicit date restrictions. If keywords find nothing, retrieval falls back to the most recent memories while preserving the time bounds. Returns a summaries array containing the same memory summary objects as search: id, title, summary, url, meeting_id, summary_id, meeting_title, notes, action, start_time_local, end_time_local, current_location, and metadata. The id can be passed directly to fetch. For the full transcript and latest notes, call fetch with id: summary-{meeting_id}.",
       "name": "summary_search",
       "parameters": [
         "end_time",
@@ -79,7 +79,7 @@
         "start_time"
       ],
       "required": [],
-      "title": "Search Meeting Summaries"
+      "title": "Search Memory Summaries"
     },
     {
       "annotations": {
@@ -88,7 +88,7 @@
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Search or list the authenticated user's tasks. Results combine review tasks (AI suggestions awaiting confirmation) and main tasks (saved active tasks), and identify each task's source. Use keywords to search task content and descriptions; omit keywords to list the most recent tasks. Completed and deleted tasks are excluded unless explicitly requested.",
+      "description": "Search or list the authenticated user's tasks. Results combine review tasks (AI suggestions awaiting confirmation) and main tasks (saved tasks), and identify each task's source. Use keywords to search task content and descriptions; omit keywords to list recent tasks. Completed and deleted tasks are excluded unless explicitly requested. Results include task details and IDs; fetch with id: todo-{id} retrieves a task. To read a linked memory's latest notes and full transcript, use its meeting_id in a separate fetch with id: summary-{meeting_id}.",
       "name": "todo_search",
       "parameters": [
         "include_completed",
